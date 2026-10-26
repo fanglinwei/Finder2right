@@ -216,3 +216,34 @@ do {
 } catch {}
 assert(commandWriteFailure.commands.isEmpty)
 print("PASS: transactional editor commits, normalization, duplicate rejection, empty list, multiline commands, validation/write failure preserves memory and disk")
+
+let launcherURL = directory.appendingPathComponent("configuration/launcher.json")
+let defaultLauncher = try LauncherSettings.load(from: launcherURL)
+assert(defaultLauncher == LauncherSettings() && defaultLauncher.action == .menu)
+for action in LauncherSettings.Action.allCases {
+    let settings = LauncherSettings(action: action, command: command.command)
+    try LauncherSettings.save(settings, to: launcherURL)
+    let loaded = try LauncherSettings.load(from: launcherURL)
+    assert(loaded == settings)
+}
+let lastValidLauncher = try Data(contentsOf: launcherURL)
+for command in ["", " \n\t", "pwd\0"] {
+    do {
+        try LauncherSettings.save(LauncherSettings(action: .customCommand, command: command), to: launcherURL)
+        fatalError("Invalid launcher command accepted")
+    } catch {}
+    let unchangedLauncher = try Data(contentsOf: launcherURL)
+    assert(unchangedLauncher == lastValidLauncher)
+}
+for json in ["broken JSON", "{\"action\":\"unknown\",\"command\":\"pwd\"}", "{\"action\":\"customCommand\",\"command\":\" \"}"] {
+    try Data(json.utf8).write(to: launcherURL)
+    do {
+        _ = try LauncherSettings.load(from: launcherURL)
+        fatalError("Invalid launcher configuration silently accepted")
+    } catch {}
+}
+do {
+    try LauncherSettings.save(defaultLauncher, to: directory.appendingPathComponent("notes.md/launcher.json"))
+    fatalError("Failed launcher writes must be reported")
+} catch {}
+print("PASS: launcher defaults, all click modes, multiline command persistence, invalid/corrupt configuration rejection, failed saves preserve existing configuration")

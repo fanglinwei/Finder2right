@@ -16,7 +16,15 @@ final class FinderExtension: FIFinderSync {
     override var toolbarItemToolTip: String { "新建文件或在终端中打开当前文件夹" }
 
     override var toolbarItemImage: NSImage {
-        NSImage(systemSymbolName: "doc.badge.plus", accessibilityDescription: "新建文件") ?? NSImage()
+        let appURL = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let appIcon = NSWorkspace.shared.icon(forFile: appURL.path)
+        let image = NSImage(size: NSSize(width: 18, height: 18))
+        // Render a small bitmap so Finder does not receive the full-size app icon representations.
+        image.lockFocus()
+        appIcon.draw(in: NSRect(origin: .zero, size: image.size))
+        image.unlockFocus()
+        image.accessibilityDescription = toolbarItemName
+        return image
     }
 
     override func menu(for menuKind: FIMenuKind) -> NSMenu? {

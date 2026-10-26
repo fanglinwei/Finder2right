@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var mainWindow: NSWindow?
     private var isHandlingRequest = false
     private var hasReceivedRequest = false
+    private var toolbarSelection: URL?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Launch Services delivers URL events during startup; defer the ordinary launch window.
@@ -21,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showMainWindow() {
+        NSApp.setActivationPolicy(.regular)
         if mainWindow == nil {
             let window = NSWindow(contentViewController: NSHostingController(rootView: MainView(store: store)))
             window.title = "Finder2right"
@@ -36,7 +38,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first, let request = FinderRequest(url: url) else { return }
+        guard let url = urls.first else { return }
+        if url.absoluteString == "finder2right://toolbar" {
+            guard !isHandlingRequest else { return }
+            hasReceivedRequest = true
+            isHandlingRequest = true
+            let location = NSEvent.mouseLocation
+            DispatchQueue.main.async { self.handleToolbarClick(at: location) }
+            return
+        }
+        guard let request = FinderRequest(url: url) else { return }
         hasReceivedRequest = true
         isHandlingRequest = true
         mainWindow?.close()
@@ -65,6 +76,89 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func handleToolbarClick(at location: NSPoint) {
+        do {
+            let settings = try LauncherSettings.load()
+            guard let script = NSAppleScript(source: """
+                tell application id "com.apple.finder"
+                    if (count of Finder windows) is 0 then
+                        return POSIX path of (desktop as alias)
+                    end if
+                    return POSIX path of (target of front Finder window as alias)
+                end tell
+                """) else {
+                throw NSError(domain: "Finder2right", code: 10, userInfo: [
+                    NSLocalizedDescriptionKey: "无法创建 Finder 目录读取请求。"
+                ])
+            }
+            var error: NSDictionary?
+            let result = script.executeAndReturnError(&error)
+            guard error == nil, let path = result.stringValue, path.hasPrefix("/") else {
+                let reason = error?[NSAppleScript.errorMessage] as? String ?? "Finder 未返回本地文件夹路径。"
+                throw NSError(domain: "Finder2right", code: 11, userInfo: [
+                    NSLocalizedDescriptionKey: "无法读取 Finder 当前文件夹：\(reason)\n请打开一个本地文件夹，并在系统设置 → 隐私与安全性 → 自动化中允许 Finder2right 控制 Finder。"
+                ])
+            }
+            let directory = try FileCreation.directory(from: URL(fileURLWithPath: path, isDirectory: true))
+            switch settings.action {
+            case .openTerminal:
+                openTerminal(directory: directory)
+                return
+            case .customCommand:
+                try runTerminalCommand(command: settings.command, directory: directory)
+                finishRequest()
+                return
+            case .menu:
+                break
+            }
+            let menu = toolbarMenu(directory: directory,
+                                   types: try FileTypes.load(), commands: try TerminalCommands.load())
+            toolbarSelection = nil
+            menu.popUp(positioning: nil, at: location, in: nil)
+            if let url = toolbarSelection {
+                toolbarSelection = nil
+                application(NSApp, open: [url])
+                return
+            }
+        } catch {
+            NSApp.activate(ignoringOtherApps: true)
+            NSAlert(error: error).runModal()
+        }
+        finishRequest()
+    }
+
+    func toolbarMenu(directory: URL, types: [FileType], commands: [TerminalCommand]) -> NSMenu {
+        let menu = NSMenu()
+        func add(_ title: String, action: FinderRequest.Action, to menu: NSMenu) {
+            let item = NSMenuItem(title: title, action: #selector(selectToolbarItem(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = FinderRequest(action: action, directory: directory).url
+            menu.addItem(item)
+        }
+        add("打开目录终端", action: .openTerminal, to: menu)
+        let commandsItem = NSMenuItem(title: "终端命令", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        for command in commands where command.isEnabled {
+            add(command.name, action: .runCommand(command.id), to: submenu)
+        }
+        if submenu.items.isEmpty {
+            let item = NSMenuItem(title: "请在 Finder2right 主窗口配置命令", action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            submenu.addItem(item)
+        }
+        commandsItem.submenu = submenu
+        menu.addItem(commandsItem)
+        menu.addItem(.separator())
+        for type in types where type.isEnabled {
+            add("新建" + type.name + "…", action: .createFile(type.id), to: menu)
+        }
+        return menu
+    }
+
+    @objc private func selectToolbarItem(_ sender: NSMenuItem) {
+        toolbarSelection = sender.representedObject as? URL
+    }
+
     private func openTerminal(directory: URL) {
         do {
             let directory = try FileCreation.directory(from: directory)
@@ -89,15 +183,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func finishRequest() {
         isHandlingRequest = false
-        NSApp.terminate(nil)
+        if mainWindow == nil { NSApp.terminate(nil) }
     }
 
     private func runTerminalCommand(id: UUID, directory: URL) throws {
-        let directory = try FileCreation.directory(from: directory)
         guard let command = try TerminalCommands.load().first(where: { $0.id == id && $0.isEnabled }) else {
             throw NSError(domain: "Finder2right", code: 6, userInfo: [NSLocalizedDescriptionKey: "该命令已停用或删除，请重新展开终端命令菜单。"])
         }
-        guard let script = NSAppleScript(source: TerminalCommands.appleScript(command: command.command, directory: directory)) else {
+        try runTerminalCommand(command: command.command, directory: directory)
+    }
+
+    private func runTerminalCommand(command: String, directory: URL) throws {
+        let directory = try FileCreation.directory(from: directory)
+        guard let script = NSAppleScript(source: TerminalCommands.appleScript(command: command, directory: directory)) else {
             throw NSError(domain: "Finder2right", code: 7, userInfo: [NSLocalizedDescriptionKey: "无法创建终端运行请求。"])
         }
         var error: NSDictionary?

@@ -11,7 +11,7 @@
 - `Releases/Finder2right-<版本号>-arm64.dmg`
 - `Releases/安装指南.html`
 
-版本号、独立 build 号和最低 macOS 版本取自实际 App 的 Info.plist，且必须与内置 Finder 扩展一致。当前为 0.1.0、Build 1、macOS 14.0。不会修改项目版本或 Debug 构建的架构设置。
+版本号、独立 build 号和最低 macOS 版本取自实际 App 的 Info.plist，且必须与内置 Finder 扩展一致。当前为 0.2.0、Build 2、macOS 14.0。不会修改项目版本或 Debug 构建的架构设置。
 
 已有纯 arm64 的 Release App 时，可跳过构建：
 

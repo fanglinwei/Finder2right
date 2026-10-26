@@ -13,27 +13,29 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.0</string>
-	<key>CFBundleURLTypes</key>
+	<string>0.2.0</string>
+	<key>CFBundleSupportedPlatforms</key>
 	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>Create file</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>finder2right</string>
-			</array>
-		</dict>
+		<string>MacOSX</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict/>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.FinderSync</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>FinderExtension</string>
+	</dict>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSAppleEventsUsageDescription</key>
-	<string>在终端中切换到 Finder 当前文件夹并运行你配置的命令。</string>
 </dict>
 </plist>

@@ -9,15 +9,17 @@ struct MainView: View {
     @State private var commandSelection: UUID?
 
     private var errorMessage: String? {
-        section == 0 ? store.errorMessage : commands.errorMessage
+        section == 0 ? store.errorMessage : (section == 1 ? commands.errorMessage : nil)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if section == 0 {
                 FileTypesView(store: store, selection: $typeSelection)
-            } else {
+            } else if section == 1 {
                 TerminalCommandsView(store: commands, selection: $commandSelection)
+            } else {
+                LauncherSettingsView()
             }
             if let errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.circle")
@@ -32,8 +34,10 @@ struct MainView: View {
                 }
                 .controlSize(.small)
                 Spacer()
-                Text("\(section == 0 ? store.savedTypes.filter(\.isEnabled).count : commands.commands.filter(\.isEnabled).count) 项已启用")
-                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                if section != 2 {
+                    Text("\(section == 0 ? store.savedTypes.filter(\.isEnabled).count : commands.commands.filter(\.isEnabled).count) 项已启用")
+                        .font(.system(size: 11)).foregroundStyle(.secondary)
+                }
             }
         }
         .padding(20)
@@ -44,9 +48,10 @@ struct MainView: View {
                 Picker("配置页面", selection: $section) {
                     Text("文件类型").tag(0)
                     Text("终端命令").tag(1)
+                    Text("启动器").tag(2)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 232)
+                .frame(width: 320)
             }
         }
         .onAppear {
