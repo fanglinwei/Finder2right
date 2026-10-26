@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Finder2right/App/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" width="96" alt="Finder2right 图标">
+  <img src="docs/images/app-icon.png" width="96" alt="Finder2right 图标">
 </p>
 
 <h1 align="center">Finder2right</h1>
