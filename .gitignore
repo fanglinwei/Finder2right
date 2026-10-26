@@ -5,3 +5,5 @@ xcuserdata/
 .codex/
 output/
 *.xcuserstate
+Releases/*.dmg
+__pycache__/
