@@ -190,6 +190,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let command = try TerminalCommands.load().first(where: { $0.id == id && $0.isEnabled }) else {
             throw NSError(domain: "Finder2right", code: 6, userInfo: [NSLocalizedDescriptionKey: "该命令已停用或删除，请重新展开终端命令菜单。"])
         }
+        let directory = try FileCreation.directory(from: directory)
+        let alert = TerminalCommandAlert.confirmation(command: command, directory: directory)
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
         try runTerminalCommand(command: command.command, directory: directory)
     }
 

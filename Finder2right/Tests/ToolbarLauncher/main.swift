@@ -29,6 +29,53 @@ assert(empty.items.count == 3)
 assert(empty.items[1].submenu?.items.first?.isEnabled == false)
 print("PASS: launcher menu actions preserve directory and IDs; disabled entries excluded; empty configuration handled")
 
+let multilineCommand = TerminalCommand(name: "检查目录", command: String(repeating: """
+printf '%s\\n' "中文与空格"
+pwd
+
+""", count: 30))
+let confirmation = TerminalCommandAlert.confirmation(command: multilineCommand, directory: directory)
+assert(confirmation.messageText.contains(multilineCommand.name))
+assert(confirmation.buttons.map(\.title) == ["执行", "取消"])
+assert(confirmation.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}"])
+guard let content = confirmation.accessoryView as? NSStackView else { fatalError("Missing confirmation details") }
+let scrollViews = content.arrangedSubviews.compactMap { $0 as? NSScrollView }
+assert(scrollViews.count == 2)
+let textViews = scrollViews.compactMap { $0.documentView as? NSTextView }
+assert(textViews.map(\.string) == [multilineCommand.command, directory.path])
+assert(textViews[0].font == NSFont.monospacedSystemFont(ofSize: 13, weight: .regular))
+assert(textViews[1].font == NSFont.systemFont(ofSize: 12))
+assert(textViews.allSatisfy { !$0.isEditable && $0.isSelectable })
+assert(scrollViews.allSatisfy { $0.hasVerticalScroller })
+confirmation.layout()
+assert(scrollViews[0].frame.height == 96, "Long commands must have a bounded scrolling area")
+let compactConfirmation = TerminalCommandAlert.confirmation(command: command, directory: directory)
+compactConfirmation.layout()
+guard let compactContent = compactConfirmation.accessoryView as? NSStackView,
+      let compactCommand = compactContent.arrangedSubviews.compactMap({ $0 as? NSScrollView }).first else {
+    fatalError("Missing compact command preview")
+}
+assert(compactCommand.frame.height < 40, "Single-line commands must not reserve multiline space")
+assert(compactCommand.frame.width == 360)
+assert(compactConfirmation.window.frame.height < confirmation.window.frame.height)
+guard let alertContent = compactConfirmation.window.contentView,
+      let iconView = alertContent.subviews.compactMap({ $0 as? NSImageView }).first,
+      let heading = alertContent.subviews.compactMap({ $0 as? NSTextField }).first(where: { $0.stringValue == compactConfirmation.messageText }) else {
+    fatalError("Missing system alert header")
+}
+assert(heading.frame.minX > iconView.frame.maxX)
+assert(heading.frame.midY > iconView.frame.minY)
+guard let detailsFrame = compactContent.superview?.frame else { fatalError("Missing details container") }
+assert(abs(iconView.frame.minY - detailsFrame.maxY - 12) < 1)
+let compactHeight = compactConfirmation.window.frame.height
+compactConfirmation.layout()
+assert(abs(compactConfirmation.window.frame.height - compactHeight) < 1, "Repeated layout must not keep shrinking the alert")
+for (index, expected) in [(0, NSApplication.ModalResponse.alertFirstButtonReturn), (1, .alertSecondButtonReturn)] {
+    DispatchQueue.main.async { compactConfirmation.buttons[index].performClick(nil) }
+    assert(compactConfirmation.runModal() == expected)
+}
+print("PASS: confirmation preserves full multiline command and directory; details are selectable and read-only; Return executes and Escape cancels")
+
 let launcherDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
 try FileManager.default.createDirectory(at: launcherDirectory, withIntermediateDirectories: true)
 defer { try? FileManager.default.removeItem(at: launcherDirectory) }
