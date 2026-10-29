@@ -15,30 +15,32 @@
 
 - **新建文件**：通过 Finder 右键菜单或工具栏创建 TXT、Markdown 等空白文件，支持预设与自定义扩展名。
 - **打开目录终端**：在当前 Finder 文件夹中打开 macOS Terminal。
-- **常用命令**：保存并运行多行终端命令，自动切换到当前目录。
+- **常用命令**：保存多行终端命令，从菜单运行前预览完整命令与执行目录，确认后自动切换到当前目录执行。
 - **工具栏启动器**：按住 ⌘ 将「启动器」配置页的图标拖入 Finder 工具栏；可选择展开菜单、打开当前目录终端或执行自定义多行命令。
 - **后台菜单**：启动器可在鼠标位置展开菜单，不切换前台 App，也不新增 Dock 图标。
 - **原生设置**：管理启用状态和菜单顺序，支持菜单预览及系统浅色、深色外观。
 
 <details>
-<summary>查看终端命令设置</summary>
+<summary>查看终端命令与启动器设置</summary>
 
-<img src="docs/images/terminal-commands.png" width="720" alt="Finder2right 终端命令设置">
+<img src="docs/images/terminal-commands.png" width="720" alt="Finder2right 0.3.0 终端命令设置">
+
+<img src="docs/images/toolbar-launcher.png" width="720" alt="Finder2right 0.3.0 工具栏启动器设置，支持三种点击行为">
 
 </details>
 
-## 0.2.0 更新
+## 0.3.0 更新
 
-- 新增无下拉箭头的 Finder 工具栏启动器，可从「启动器」配置页直接拖入工具栏。
-- 新增三种可保存的点击行为：展开菜单、打开当前目录终端、执行自定义终端命令。
-- 展开菜单时保持当前 App 的焦点；取消菜单后保留原窗口，正常打开主 App 仍显示配置界面和 Dock 图标。
-- 源码、资源和测试统一整理到 `Finder2right/` 目录。
+- 从菜单运行已保存的终端命令前，先展示命令名称、完整命令和执行目录，确认后执行，支持取消。
+- 长命令和长路径支持滚动查看，预览内容可选择复制；Return 确认，Escape 取消。
+- 命令确认界面独立维护，补充布局、字体、确认与取消行为的回归测试。
+- 新增 [架构说明](docs/architecture.md)，梳理进程、Module 与调用关系。
 
 ## 安装与使用
 
-从 [GitHub Releases](https://github.com/fanglinwei/Finder2right/releases/latest) 下载最新安装包，或直接下载 [Finder2right 0.2.0（Apple Silicon）](https://github.com/fanglinwei/Finder2right/releases/download/v0.2.0/Finder2right-0.2.0-arm64.dmg)。需要 macOS 14 或更高版本，当前安装包不支持 Intel Mac。
+从 [GitHub Releases](https://github.com/fanglinwei/Finder2right/releases/latest) 下载最新安装包，或直接下载 [Finder2right 0.3.0（Apple Silicon）](https://github.com/fanglinwei/Finder2right/releases/download/v0.3.0/Finder2right-0.3.0-arm64.dmg)。需要 macOS 14 或更高版本，当前安装包不支持 Intel Mac。
 
-1. 双击打开 `Finder2right-0.2.0-arm64.dmg`，将 **Finder2right** 拖入右侧的 **Applications（应用程序）**。替换旧版本前先退出 App。
+1. 双击打开 `Finder2right-0.3.0-arm64.dmg`，将 **Finder2right** 拖入右侧的 **Applications（应用程序）**。替换旧版本前先退出 App。
 2. 从「应用程序」文件夹打开 Finder2right。安装包使用 ad-hoc 签名，未经 Apple 公证；若首次打开被拦截，按 DMG 内的「安装指南」单独放行此 App。DMG 也附有仅处理 Finder2right 下载隔离属性的辅助脚本。
 3. 点击 App 中的 **Finder 扩展设置…**，启用 **FinderExtension**。若系统未发现扩展，确认 App 已安装到「应用程序」并打开过一次，避免保留多个相同标识的副本。
 4. 在 Finder 文件夹内空白处或单个文件夹上点右键，选择 **新建文件**。如需终端入口，在 Finder 工具栏上点右键 → **自定工具栏…**，将 **新建文件** 按钮拖入工具栏，通过它打开当前目录终端或运行已保存的命令。
@@ -48,7 +50,7 @@
 
 文件类型与命令在应用中配置，保存后下次展开菜单即可生效。新建文件通过系统保存窗口命名，不覆盖已有文件；所有文件类型均创建空文件，不包含格式模板。
 
-首次使用终端功能时，按系统提示允许 Finder2right 控制 Terminal；可在「系统设置 → 隐私与安全性 → 自动化」中管理权限。命令以当前用户权限直接执行，请仅添加可信内容。
+首次使用终端功能时，按系统提示允许 Finder2right 控制 Terminal；可在「系统设置 → 隐私与安全性 → 自动化」中管理权限。从菜单运行已保存的命令时，会先显示确认弹窗；启动器的「执行自定义终端命令」点击行为仍直接执行。命令以当前用户权限执行，请仅添加可信内容。
 
 ## 两种 Finder 入口
 
