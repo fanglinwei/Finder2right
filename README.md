@@ -11,13 +11,17 @@
 
 将启动器添加到 Finder 工具栏，并通过工具栏使用 Finder2right：
 
-<img src="docs/images/finder-toolbar-demo.gif" width="700" alt="Finder2right 工具栏操作演示动画">
+<p align="center">
+  <img src="docs/images/finder-toolbar-demo.gif" width="700" alt="Finder2right 工具栏操作演示动画">
+</p>
 
 ## 右键菜单演示
 
 在 Finder 中右键打开菜单，使用「新建文件」入口：
 
-<img src="docs/images/finder-context-menu-demo.gif" width="700" alt="Finder2right 右键菜单操作演示动画">
+<p align="center">
+  <img src="docs/images/finder-context-menu-demo.gif" width="700" alt="Finder2right 右键菜单操作演示动画">
+</p>
 
 
 
@@ -36,12 +40,15 @@
 <p align="center">
   <img src="docs/images/file-types.png" width="600" alt="Finder2right 文件类型设置">
 </p>
-
-<img src="docs/images/terminal-commands.png" width="600" alt="Finder2right 0.3.0 终端命令设置">
-
-<img src="docs/images/toolbar-launcher.png" width="600" alt="Finder2right 0.3.0 工具栏启动器设置，支持三种点击行为">
-
+<p align="center">
+  <img src="docs/images/terminal-commands.png" width="600" alt="Finder2right 0.3.0 终端命令设置">
+</p>
+<p align="center">
+  <img src="docs/images/toolbar-launcher.png" width="600" alt="Finder2right 0.3.0 工具栏启动器设置，支持三种点击行为">
+</p>
 </details>
+
+
 
 ## 0.3.0 更新
 
