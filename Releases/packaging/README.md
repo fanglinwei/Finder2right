@@ -1,17 +1,17 @@
 # Finder2right DMG 打包
 
-参考 Combo 的 Releases 结构，生成仅支持 Apple Silicon 的拖动安装镜像。默认命令：
+生成仅支持 Apple Silicon 的拖动安装镜像：
 
 ```sh
 ./Releases/package-dmg.sh
 ```
 
-脚本根据自身位置定位项目，也可进入 Releases 后执行。它构建当前源码的 Release（纯 arm64），输出：
+脚本构建当前源码的 Release（纯 arm64），输出：
 
 - `Releases/Finder2right-<版本号>-arm64.dmg`
 - `Releases/安装指南.html`
 
-版本号、独立 build 号和最低 macOS 版本取自实际 App 的 Info.plist，且必须与内置 Finder 扩展一致。当前为 0.3.0、Build 3、macOS 14.0。不会修改项目版本或 Debug 构建的架构设置。
+版本号、build 号和最低 macOS 版本取自实际 App 的 Info.plist，且必须与内置 Finder 扩展一致。脚本不修改项目版本或 Debug 构建的架构设置。
 
 已有纯 arm64 的 Release App 时，可跳过构建：
 
@@ -27,10 +27,6 @@
 - Python 3.10 或更高版本，支持 venv 和 pip。首次运行创建 `build/dmg-venv` 并安装 `requirements.txt` 中固定版本的 ds_store 和 mac_alias；之后可离线打包。
 - Xcode 默认路径为 `/Applications/Xcode.app/Contents/Developer`，可用 `FINDER2RIGHT_DEVELOPER_DIR` 覆盖。
 
-```sh
-FINDER2RIGHT_DEVELOPER_DIR="/path/to/Xcode.app/Contents/Developer" ./Releases/package-dmg.sh
-```
-
 ## 镜像内容
 
 DMG 使用 HFS+、UDZO 压缩，Finder 窗口为 760 × 528，背景为 760 × 500 逻辑点、1520 × 1000 像素。上排是 Finder2right → Applications 拖动安装入口，下排是安装指南与清除下载隔离脚本。两个辅助入口使用自定义文档、终端图标并隐藏扩展名。
@@ -39,13 +35,13 @@ DMG 使用 HFS+、UDZO 压缩，Finder 窗口为 760 × 528，背景为 760 × 5
 
 安装辅助脚本只处理固定的 `/Applications/Finder2right.app`，核对 App 标识后等待用户确认，仅递归删除 `com.apple.quarantine` 属性，保留其他扩展属性，不跟随符号链接。它不修改系统全局来源限制；打包及测试不会运行此安装脚本，也不会处理本机已安装的 App。回归测试只在独立临时目录中验证同一条属性删除命令。
 
-本流程使用 ad-hoc 签名，没有 Developer ID 分发签名或 Apple 公证。Finder 扩展保留现有 sandbox 和配置目录只读临时例外；没有迁移 App Groups。跨机器的扩展注册、Gatekeeper 放行与 Terminal 授权需要实际安装验证。本项目尚未接入 Sparkle，因此不复制 Combo 的 updates 工具，也不生成更新源或执行线上发布。
+签名与分发限制见 [README](../../README.md#当前限制)。跨机器的扩展注册、Gatekeeper 放行与 Terminal 授权需要实际安装验证；打包不上传文件、不创建 GitHub Release，也不生成自动更新源。
 
 ## 校验与失败恢复
 
 打包校验 App 和 Finder 扩展的标识、版本、执行权限、所有 Mach-O 架构、嵌套签名和扩展 entitlements。写入 Finder 布局后，再校验镜像文件哈希、自定义图标、Applications 链接和脚本权限；压缩后重新挂载只读镜像复查，并执行 `hdiutil verify`。
 
-同版本重跑会替换同名 DMG。只有校验通过后，才将新 DMG 与指南放入 Releases；第二份文件替换失败或收到正常终止信号时，会回滚两份文件并保留旧数据和图标资源。`publish` 是本地文件替换步骤，不上传文件，不创建 GitHub Release，不执行 Git 操作。
+同版本重跑会替换同名 DMG。只有校验通过后，`publish` 才将新 DMG 与指南放入 Releases；第二份文件替换失败或收到正常终止信号时，会回滚两份文件并保留旧数据和图标资源。
 
 运行期间以 `build/dmg-package.lock` 防止并发，只自动卸载本次创建的临时镜像；输出 DMG 已挂载时会停止。若无法确认临时镜像已卸载，保留工作目录并报告位置。断电或 kill -9 无法触发清理；若遗留锁或 `.finder2right-publish-*` 备份，请先确认没有打包任务、弹出相关镜像并恢复备份，再处理空锁目录。
 
